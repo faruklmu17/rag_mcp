@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Agile Storyboard</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .board {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .column {
+      flex: 1;
+      background: #f4f4f4;
+      border-radius: 8px;
+      padding: 15px;
+      min-height: 300px;
+      box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .column h3 {
+      text-align: center;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 5px;
+      padding: 10px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .card strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #007acc;
+    }
+
+    .card small {
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h2>Agile Storyboard</h2>
+
+  <div class="board" id="storyboard"></div>
+
+  <script>
+    const assignments = [
+      { engineer: "Alice Smith", item: "Implement login form", status: "Developing" },
+      { engineer: "Bob Johnson", item: "Implement login form", status: "Testing" },
+      { engineer: "Charlie Liu", item: "Fix logout bug", status: "Under Review" },
+      { engineer: "Diana Patel", item: "Fix logout bug", status: "Done" },
+      { engineer: "Alice Smith", item: "Add forgot password flow", status: "Under Review" },
+      { engineer: "Bob Johnson", item: "Add forgot password flow", status: "Testing" },
+      { engineer: "Charlie Liu", item: "Incorrect error message on reset", status: "Developing" },
+      { engineer: "Diana Patel", item: "Incorrect error message on reset", status: "Testing" },
+      { engineer: "Alice Smith", item: "Fix logout bug", status: "Ready for QA" } // 👈 NEW status
+    ];
+
+    // Dynamically collect unique statuses
+    const statuses = [...new Set(assignments.map(a => a.status))];
+
+    const board = document.getElementById("storyboard");
+
+    statuses.forEach(status => {
+      const column = document.createElement("div");
+      column.className = "column";
+
+      const heading = document.createElement("h3");
+      heading.textContent = status;
+      column.appendChild(heading);
+
+      assignments
+        .filter(a => a.status === status)
+        .forEach(a => {
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `<strong>${a.item}</strong><small>${a.engineer}</small>`;
+          column.appendChild(card);
+        });
+
+      board.appendChild(column);
+    });
+  </script>
+</body>
+</html>
