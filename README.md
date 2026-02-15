@@ -123,8 +123,202 @@ Ask questions in plain English:
 
 ### Run the Client
 
+**Step-by-step guide to connect MCP to LLM:**
+
+#### **Step 1: Verify Prerequisites**
+
+Make sure you have everything installed:
+
+```bash
+# Check Python version (should be 3.7+)
+python3 --version
+
+# Check Node.js version (should be 14+)
+node --version
+
+# Verify Playwright MCP is installed
+ls node_modules/@playwright/mcp
+# Should show the package directory
+
+# Verify Python packages are installed
+pip list | grep -E "fastmcp|httpx|mcp|python-dotenv"
+# Should show: fastmcp, httpx, mcp, python-dotenv
+
+# Verify database exists
+ls db/agile_board.db
+# Should show: db/agile_board.db
+```
+
+#### **Step 2: Set Up Your Groq API Key**
+
+1. **Get your API key** from https://console.groq.com/keys (free account)
+
+2. **Create the `.env` file:**
+   ```bash
+   echo "GROQ_API_KEY=your-actual-api-key-here" > .env
+   ```
+
+3. **Verify the `.env` file:**
+   ```bash
+   cat .env
+   # Should show: GROQ_API_KEY=gsk_...
+   ```
+
+#### **Step 3: Start the Client**
+
 ```bash
 python3 llm_client_playwright.py
+```
+
+**What happens when you run this:**
+
+1. **Database MCP starts** - Loads agile board data from SQLite
+   ```
+   🚀 Starting MCP servers...
+   🔌 Starting Database MCP server...
+   ✅ Database MCP ready! Loaded 9 assignments
+   ```
+
+2. **Playwright MCP starts** - Initializes browser automation tools
+   ```
+   🎭 Starting Playwright MCP server...
+   ✅ Playwright MCP ready! 10 tools available
+      Key tools: browser_navigate, browser_snapshot, browser_click, browser_type
+   ```
+
+3. **Client is ready** - You can now ask questions!
+   ```
+   ======================================================================
+   ✅ READY! You can now ask questions about:
+      📊 Your agile board database
+      🌐 ANY webpage on the internet
+   ======================================================================
+
+   Examples:
+     - What assignments does Alice have?
+     - Go to https://example.com and tell me what's on the page
+     - Navigate to http://localhost:5500 and compare with database
+   ======================================================================
+
+   💬 You: _
+   ```
+
+#### **Step 4: Try Your First Query**
+
+**Example 1: Database Query**
+```
+💬 You: What assignments does Alice have?
+
+🤖 Asking Groq (llama-3.3-70b-versatile) with tool calling enabled...
+
+🤖 Assistant:
+Alice Smith has the following assignments:
+1. "Implement login form" - Status: Developing
+2. "Add forgot password flow" - Status: Under Review
+3. "Fix logout bug" - Status: Ready for QA
+```
+
+**Example 2: Navigate to a Website**
+```
+💬 You: Go to https://google.com
+
+🤖 Asking Groq (llama-3.3-70b-versatile) with tool calling enabled...
+
+🔧 LLM is calling 2 tool(s)...
+   🛠️  browser_navigate({"url": "https://google.com"})
+   ✅ Result: Navigated to https://google.com
+   🛠️  browser_snapshot({})
+   ✅ Result: navigation "Navigation"...
+
+🤖 Assistant:
+I've navigated to Google's homepage. The page has:
+- A search box (ref=e46) where you can enter search queries
+- A 'Google Search' button (ref=e69)
+- An 'I'm Feeling Lucky' button (ref=e70)
+- Navigation links for About, Store, Gmail, and Images
+```
+
+**Example 3: Multi-Step Automation**
+```
+💬 You: Go to google.com and search for "weather"
+
+🤖 Asking Groq (llama-3.3-70b-versatile) with tool calling enabled...
+
+🔧 LLM is calling 2 tool(s)...
+   🛠️  browser_navigate({"url": "https://google.com"})
+   ✅ Result: Navigated successfully
+   🛠️  browser_snapshot({})
+   ✅ Result: [accessibility tree]
+
+🔧 LLM is calling 2 tool(s)...
+   🛠️  browser_type({"ref": "e46", "text": "weather", "element": "Search box"})
+   ✅ Result: Typed "weather"
+   🛠️  browser_press_key({"key": "Enter"})
+   ✅ Result: Pressed Enter
+
+🔧 LLM is calling 1 tool(s)...
+   🛠️  browser_snapshot({})
+   ✅ Result: [search results]
+
+🤖 Assistant:
+I've searched for "weather" on Google. The results show current weather conditions...
+```
+
+#### **Step 5: Understanding the Flow**
+
+**What's happening behind the scenes:**
+
+1. **You type a question** → Client receives your input
+
+2. **Client sends to Groq LLM** → Includes:
+   - Your question
+   - Database data (agile board)
+   - Available tools (10 Playwright tools)
+   - Conversation history
+
+3. **LLM decides which tools to call** → Example:
+   - "Go to google.com" → LLM calls `browser_navigate` + `browser_snapshot`
+   - "What assignments does Alice have?" → LLM just analyzes database (no tools)
+
+4. **Client executes tools via MCP** →
+   - Sends JSON-RPC request to Playwright MCP
+   - Playwright MCP uses real Chromium browser
+   - Returns results (page snapshot, navigation status, etc.)
+
+5. **Results sent back to LLM** →
+   - LLM analyzes tool results
+   - Decides if more tools are needed
+   - Returns final answer to you
+
+6. **You see the response** → Natural language answer with context
+
+#### **Step 6: Advanced Usage**
+
+**Clear conversation history:**
+```
+💬 You: clear
+🧹 Conversation history cleared!
+```
+
+**Exit the client:**
+```
+💬 You: quit
+👋 Goodbye!
+```
+
+**Compare database with UI:**
+```
+💬 You: Go to http://127.0.0.1:5500/index.html and compare with database
+
+🤖 Assistant:
+Comparing database with UI:
+
+✅ MATCHES:
+- Alice Smith: "Implement login form" - Developing
+- Bob Johnson: "Implement login form" - Testing
+
+❌ DISCREPANCIES:
+- Database has "Add forgot password flow" but it's NOT shown on the webpage
 ```
 
 ## 💬 Example Conversations
