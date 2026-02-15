@@ -1,8 +1,5 @@
 # 🎯 Dual MCP Setup - Database + Browser Automation
 
-> **✅ 100% Compliant with [Official Playwright MCP Documentation](https://github.com/microsoft/playwright-mcp)**
->
-> See [OFFICIAL_PLAYWRIGHT_MCP_COMPLIANCE.md](./OFFICIAL_PLAYWRIGHT_MCP_COMPLIANCE.md) for detailed compliance verification.
 
 ## ✅ What You Have Now
 
@@ -256,8 +253,4 @@ Go to https://example.com and describe the page
 3. **Inspection:** `browser_console_messages`, `browser_network_requests`, `browser_take_screenshot`
 4. **Advanced:** `browser_evaluate`, `browser_run_code`, `browser_tabs`, `browser_drag`
 
-### Compliance
-✅ Our implementation is **100% compliant** with the official Playwright MCP specification.
-
-See [OFFICIAL_PLAYWRIGHT_MCP_COMPLIANCE.md](./OFFICIAL_PLAYWRIGHT_MCP_COMPLIANCE.md) for detailed verification.
 

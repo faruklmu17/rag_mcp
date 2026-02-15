@@ -24,5 +24,5 @@ echo ""
 echo "Generated files:"
 ls -lh snapshots/
 echo ""
-echo "Now you can run: python3 llm_client.py"
+echo "Now you can run: python3 llm_client_playwright.py"
 

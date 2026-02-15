@@ -39,5 +39,5 @@ echo "Next steps:"
 echo "  1. Edit .env and add your Groq API key"
 echo "     Get one at: https://console.groq.com/keys"
 echo "  2. Run the LLM client:"
-echo "     python3 llm_client.py"
+echo "     python3 llm_client_playwright.py"
 

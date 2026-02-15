@@ -116,10 +116,23 @@ Ask questions in plain English:
 
 5. **Set up your Groq API key**
 
-   Create a `.env` file:
+   Create a `.env` file manually or use the setup script:
    ```bash
+   # Manual
    echo "GROQ_API_KEY=your-actual-api-key-here" > .env
+   
+   # Or use setup script (automatic)
+   chmod +x setup_llm.sh
+   ./setup_llm.sh
    ```
+
+### 🛠️ Helper Scripts
+
+The project includes several helper scripts to simplify common tasks:
+
+- **`setup_llm.sh`**: Automates dependency installation, database initialization, and `.env` creation.
+- **`generate_snapshots.sh`**: Generates fresh accessibility and DOM snapshots for testing.
+- **`init_db.py`**: Resets and initializes the SQLite database with sample agile board data.
 
 ### Run the Client
 
@@ -504,7 +517,7 @@ assignments (id, engineer_id, work_item_id, status)
 - **Python** - Client and custom MCP server
 - **Node.js** - Playwright MCP runtime
 
-## � Project Structure
+## 📁 Project Structure
 
 ```
 rag_mcp/
@@ -512,17 +525,21 @@ rag_mcp/
 ├── mcp_server.py                # Custom database MCP server
 ├── init_db.py                   # Database initialization
 ├── index.html                   # Agile board UI (for testing)
+├── setup_llm.sh                 # Setup helper script
+├── generate_snapshots.sh        # Snapshot generation helper script
 ├── .env                         # Groq API key (create this)
 ├── db/
 │   └── agile_board.db          # SQLite database
+├── scripts/                    # Playwright snapshot scripts
+├── snapshots/                  # Generated UI snapshots
 ├── node_modules/
 │   └── @playwright/mcp/        # Official Playwright MCP
-└── docs/
-    ├── DUAL_MCP_SETUP.md       # Dual MCP setup guide
-    ├── HOW_TO_USE.md           # Usage guide
-    ├── LLM_DRIVEN_TOOL_CALLING.md  # Tool calling documentation
-    ├── IMPLEMENTATION_SUMMARY.md   # Implementation details
-    └── PLAYWRIGHT_MCP_TOOLS_REFERENCE.md  # Tool reference
+├── DUAL_MCP_SETUP.md           # Dual MCP setup guide
+├── HOW_TO_USE.md               # Usage guide
+├── LLM_DRIVEN_TOOL_CALLING.md  # Tool calling documentation
+├── IMPLEMENTATION_SUMMARY.md   # Implementation details
+├── PLAYWRIGHT_MCP_TOOLS_REFERENCE.md  # Tool reference
+└── CLEANUP_SUMMARY.md          # Project cleanup summary
 ```
 
 ## 📚 Documentation
@@ -530,8 +547,9 @@ rag_mcp/
 - **[DUAL_MCP_SETUP.md](DUAL_MCP_SETUP.md)** - Complete dual MCP setup guide
 - **[HOW_TO_USE.md](HOW_TO_USE.md)** - Detailed usage instructions
 - **[LLM_DRIVEN_TOOL_CALLING.md](LLM_DRIVEN_TOOL_CALLING.md)** - How LLM-driven tool calling works
-- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Implementation summary
+- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Implementation details
 - **[PLAYWRIGHT_MCP_TOOLS_REFERENCE.md](PLAYWRIGHT_MCP_TOOLS_REFERENCE.md)** - All 22 Playwright tools
+- **[CLEANUP_SUMMARY.md](CLEANUP_SUMMARY.md)** - Project cleanup summary
 
 ## 🎓 Key Concepts
 
