@@ -1,58 +1,97 @@
-# Agile QA MCP Server
+# 🤖 Dual MCP + LLM-Driven Browser Automation
 
-A demonstration project showcasing automated quality assurance testing for an agile storyboard application using **Model Context Protocol (MCP)**, **Playwright**, and **snapshot-based testing**.
+An AI-powered system that combines **database access** and **browser automation** using **LLM-driven tool calling** with the **Model Context Protocol (MCP)**.
 
-## 🎯 Purpose
+## 🎯 What This Does
 
-This project demonstrates how to catch UI bugs by comparing what the database contains versus what the UI actually displays. It intentionally includes a discrepancy (a "Ready for QA" status) to showcase automated testing techniques that can detect such issues.
+This project demonstrates:
+- **LLM-driven browser automation** - The LLM (Groq) decides which Playwright tools to use
+- **Dual MCP architecture** - Custom database MCP + Official Playwright MCP running simultaneously
+- **Natural language web interaction** - Ask the AI to navigate, analyze, and interact with any website
+- **Database + UI comparison** - Compare database state with live web pages
+- **Conversation memory** - Multi-turn conversations with context retention
+
+## ✨ Key Features
+
+### 🧠 **LLM-Driven Tool Calling**
+The LLM autonomously decides which browser automation tools to use:
+- Navigate to any URL
+- Analyze page structure (accessibility tree)
+- Click elements, type text, press keys
+- Take screenshots
+- Compare database with UI
+
+### 🔧 **Dual MCP Architecture**
+Two MCP servers running simultaneously:
+1. **Custom Database MCP** (`mcp_server.py`) - Provides agile board data
+2. **Official Playwright MCP** (`@playwright/mcp`) - Provides 10 browser automation tools
+
+### 💬 **Natural Language Interface**
+Ask questions in plain English:
+```
+"Go to https://google.com and tell me what's on the page"
+"Navigate to http://localhost:5500 and compare with the database"
+"Visit github.com/microsoft/playwright and describe the repository"
+```
 
 ## 🏗️ Architecture
 
-### Components
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    USER INPUT                               │
+│         "Go to https://google.com"                          │
+└────────────────────┬────────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────────┐
+│              llm_client_playwright.py                       │
+│  • Sends user question + tool definitions to Groq LLM       │
+│  • Receives tool calls from LLM                             │
+│  • Executes tools via Playwright MCP                        │
+│  • Sends results back to LLM                                │
+│  • Maintains conversation memory                            │
+└──┬──────────────────────────────────┬───────────────────────┘
+   │                                  │
+   │ JSON-RPC (stdio)                 │ HTTPS API
+   │                                  │
+   ▼                                  ▼
+┌──────────────────┐           ┌─────────────┐
+│  Playwright MCP  │           │  Groq API   │
+│  (@playwright/   │           │             │
+│   mcp@latest)    │           │ llama-3.3-  │
+│                  │           │ 70b-        │
+│  10 Tools:       │           │ versatile   │
+│  • navigate      │           │             │
+│  • snapshot      │           │ Decides:    │
+│  • click         │           │ • Which     │
+│  • type          │           │   tools     │
+│  • press_key     │           │ • When to   │
+│  • screenshot    │           │   call them │
+│  • hover         │           └─────────────┘
+│  • select        │
+│  • wait_for      │
+│  • evaluate      │
+└────┬─────────────┘
+     │
+     ▼
+┌──────────────────┐           ┌──────────────────┐
+│  Chromium        │           │  Database MCP    │
+│  Browser         │           │  (mcp_server.py) │
+│                  │           │                  │
+│  Any webpage     │           │  SQLite DB       │
+│  on internet     │           │  Agile board     │
+└──────────────────┘           └──────────────────┘
+```
 
-1. **Frontend (`index.html`)**
-   - Simple agile storyboard UI displaying work items across status columns
-   - Dynamically renders columns based on assignment data
-   - Shows engineer assignments and work items
-
-2. **Backend (`mcp_server.py`)**
-   - FastMCP server exposing data via MCP resources
-   - Connects to SQLite database
-   - Provides three resource endpoints:
-     - `assignments://all` - Database assignments
-     - `ui://snapshot/accessibility` - UI accessibility tree
-     - `ui://snapshot/html` - UI HTML DOM
-
-3. **Database (`init_db.py`)**
-   - SQLite database with three tables:
-     - `engineers` - Developer and QA team members
-     - `work_items` - Stories and Defects
-     - `assignments` - Links engineers to work items with status
-   - Seeded with sample data including the intentional "Ready for QA" status
-
-4. **Testing Infrastructure**
-   - **Playwright** - Browser automation and UI testing
-   - **Snapshot Testing** - Captures DOM HTML and accessibility tree
-   - **Analysis Script** - Compares UI snapshots against database state
-
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Python 3.7+
-- Node.js 14+ (for Playwright tests)
-- Groq API Key (get one at https://console.groq.com/keys)
+- **Python 3.7+**
+- **Node.js 14+** (for Playwright MCP)
+- **Groq API Key** - Get one free at https://console.groq.com/keys
 
-### Quick Setup
-
-Run the automated setup script:
-```bash
-./setup_llm.sh
-```
-
-Or follow manual installation steps below.
-
-### Manual Installation
+### Installation
 
 1. **Clone the repository**
    ```bash
@@ -65,9 +104,9 @@ Or follow manual installation steps below.
    pip install fastmcp aiosqlite httpx mcp python-dotenv
    ```
 
-3. **Install Node.js dependencies (for testing)**
+3. **Install Playwright MCP**
    ```bash
-   npm install
+   npm install @playwright/mcp@latest
    ```
 
 4. **Initialize the database**
@@ -75,105 +114,180 @@ Or follow manual installation steps below.
    python init_db.py
    ```
 
-5. **Install Playwright browsers (optional, for testing)**
+5. **Set up your Groq API key**
+
+   Create a `.env` file:
    ```bash
-   npx playwright install
+   echo "GROQ_API_KEY=your-actual-api-key-here" > .env
    ```
 
-### Running the LLM + MCP Integration
-
-**Setup your API key:**
-
-1. Copy the example env file:
-   ```bash
-   cp .env.example .env
-   ```
-
-2. Edit `.env` and add your Groq API key:
-   ```
-   GROQ_API_KEY=your-actual-api-key-here
-   ```
-   Get your key from: https://console.groq.com/keys
-
-**Query the agile board using AI:**
+### Run the Client
 
 ```bash
-python3 llm_client.py
+python3 llm_client_playwright.py
 ```
 
-You can ask questions like:
+## 💬 Example Conversations
 
-**Database queries:**
-- "What assignments does Alice Smith have?"
-- "Which work items are in Testing status?"
-- "Are there any items in Ready for QA status?"
-- "Summarize the current state of the agile board"
-- "Which engineers are working on defects?"
+### **Navigate to Any Website**
+```
+💬 You: Go to https://google.com
 
-**UI analysis:**
-- "What status columns are shown in the UI?"
-- "Does the UI match the database?"
-- "Are there any discrepancies between the DB and UI?"
-- "Compare database statuses with UI columns"
+🔧 LLM is calling 2 tool(s)...
+   🛠️  browser_navigate({"url": "https://google.com"})
+   🛠️  browser_snapshot({})
 
-See `DOM_ANALYSIS_GUIDE.md` for more details on UI + Database analysis.
-
-### Running the Frontend (Optional)
-
-1. **Serve the frontend**
-   - Use any local web server (e.g., Live Server in VS Code, Python's http.server, etc.)
-   - Default URL: `http://127.0.0.1:5500/index.html`
-
-## 🧪 Testing
-
-### Run Playwright Tests
-
-```bash
-npx playwright test
+🤖 Assistant:
+I've navigated to Google's homepage. The page has:
+- A search box (ref=e46) where you can enter search queries
+- A 'Google Search' button (ref=e69)
+- An 'I'm Feeling Lucky' button (ref=e70)
+- Navigation links for About, Store, Gmail, and Images
 ```
 
-### View Test Report
+### **Multi-Step Automation**
+```
+💬 You: Go to google.com and search for "weather"
 
-```bash
-npx playwright show-report
+🔧 LLM is calling 2 tool(s)...
+   🛠️  browser_navigate(...)
+   🛠️  browser_snapshot(...)
+
+🔧 LLM is calling 2 tool(s)...
+   🛠️  browser_type({"ref": "e46", "text": "weather"})
+   🛠️  browser_press_key({"key": "Enter"})
+
+🔧 LLM is calling 1 tool(s)...
+   🛠️  browser_snapshot({})
+
+🤖 Assistant:
+I've searched for "weather" on Google. The results show current weather conditions...
 ```
 
-### Generate UI Snapshots
+### **Database + UI Comparison**
+```
+💬 You: Go to http://127.0.0.1:5500/index.html and compare with the database
 
-The project includes scripts to capture UI snapshots:
+🔧 LLM is calling 2 tool(s)...
+   🛠️  browser_navigate(...)
+   🛠️  browser_snapshot(...)
 
-- **DOM Snapshot**: `scripts/snapshot_dom.spec.ts`
-- **Accessibility Snapshot**: `scripts/snapshot_accessibility.spec.ts`
+🤖 Assistant:
+Comparing database with UI:
 
-Run snapshot generation:
-```bash
-npx playwright test scripts/snapshot_accessibility.spec.ts
+✅ MATCHES:
+- Alice Smith: "Implement login form" - Developing
+- Bob Johnson: "Implement login form" - Testing
+- Charlie Liu: "Fix logout bug" - Under Review
+
+❌ DISCREPANCIES:
+- Database has "Add forgot password flow" but it's NOT shown on the webpage
 ```
 
-### Analyze Snapshot vs Database
+### **Analyze Any Website**
+```
+💬 You: Navigate to https://github.com/microsoft/playwright and describe the repository
 
-Compare UI snapshot against database state:
+💬 You: Go to https://stackoverflow.com and find the search box
 
-```bash
-python analyze_snapshot_vs_db.py
+💬 You: Visit https://news.ycombinator.com and list the top stories
 ```
 
-This will output a test summary showing:
-- ✅ UI column count validation
-- ❌ Unexpected columns in UI
-- ❌ Missing statuses from DB
-- ⚠️ Test coverage gaps
+## 🎯 What You Can Do
 
-## 🐛 Intentional Bug
+### **Ask About Any Website**
+- "Go to https://example.com and tell me what's on the page"
+- "Navigate to https://site.com and describe the navigation menu"
+- "Visit https://app.com and find all the form fields"
 
-The project includes an intentional discrepancy to demonstrate testing capabilities:
+### **Perform Actions**
+- "Go to google.com and search for 'Python tutorials'"
+- "Navigate to https://site.com and click the login button"
+- "Visit https://form.com and fill in the name field with 'John Doe'"
 
-- **Database** includes a "Ready for QA" status (line 69 in `init_db.py`)
-- **UI** displays this status dynamically (line 73 in `index.html`)
-- **Tests** expect only 4 statuses: Developing, Under Review, Testing, Done
-- **Result**: Tests fail, revealing the UI/DB mismatch
+### **Compare Database with UI**
+- "Go to http://localhost:5500 and compare with the database"
+- "Does the webpage match what's in the database?"
+- "Are there any discrepancies between DB and UI?"
+
+### **Multi-Turn Conversations**
+```
+💬 You: Go to https://google.com
+💬 You: What's the ref for the search box?
+💬 You: Write a Playwright test to search for "weather"
+💬 You: Now add a step to click the first result
+```
+
+### **Clear Conversation**
+```
+💬 You: clear
+🧹 Conversation history cleared!
+```
+
+## 🛠️ Available Tools
+
+The LLM can autonomously use these 10 Playwright tools:
+
+| Tool | Description |
+|------|-------------|
+| `browser_navigate` | Navigate to any URL |
+| `browser_snapshot` | Get accessibility tree of current page |
+| `browser_click` | Click an element by ref |
+| `browser_type` | Type text into an input field |
+| `browser_press_key` | Press keyboard keys (Enter, Escape, etc.) |
+| `browser_take_screenshot` | Take a screenshot |
+| `browser_hover` | Hover over an element |
+| `browser_select_option` | Select option in dropdown |
+| `browser_wait_for` | Wait for text or time |
+| `browser_evaluate` | Execute JavaScript |
+
+## 🏗️ How It Works
+
+### **1. LLM-Driven Tool Calling**
+
+The LLM (Groq) decides which tools to use based on your question:
+
+```python
+# You ask: "Go to google.com"
+# LLM decides: "I need browser_navigate and browser_snapshot"
+# LLM returns: tool_calls = [
+#   {name: "browser_navigate", args: {url: "https://google.com"}},
+#   {name: "browser_snapshot", args: {}}
+# ]
+```
+
+### **2. Client Executes Tools**
+
+The client executes tools via Playwright MCP:
+
+```python
+# Client sends JSON-RPC request to Playwright MCP
+result = await playwright_mcp.call_tool("browser_navigate", {"url": "..."})
+```
+
+### **3. Playwright MCP Performs Automation**
+
+Playwright MCP uses a real Chromium browser:
+
+```javascript
+// Playwright MCP internally does:
+await page.goto("https://google.com")
+const snapshot = await page.accessibility.snapshot()
+```
+
+### **4. Results Sent Back to LLM**
+
+The client sends tool results back to the LLM:
+
+```python
+# LLM receives: "Navigated to https://google.com"
+# LLM receives: "navigation 'Navigation'\n  link 'About' [ref=e4]\n..."
+# LLM analyzes and responds to user
+```
 
 ## 📊 Database Schema
+
+The custom database MCP provides agile board data:
 
 ```sql
 engineers (id, name, role)
@@ -181,43 +295,106 @@ work_items (id, title, type)
 assignments (id, engineer_id, work_item_id, status)
 ```
 
-**Allowed Statuses**: Developing, Under Review, Testing, Done, Ready for QA
+**Sample Data:**
+- 4 engineers (Alice, Bob, Charlie, Diana)
+- 4 work items (login form, logout bug, password flow, error message)
+- 9 assignments across different statuses
 
 ## 🛠️ Technologies
 
-- **FastMCP** - Model Context Protocol server framework
-- **Playwright** - End-to-end testing framework
-- **SQLite** - Lightweight database
-- **TypeScript** - Test scripting
-- **Python** - Backend and database management
+- **Groq API** - LLM provider (llama-3.3-70b-versatile)
+- **Playwright MCP** - Official Microsoft browser automation MCP server
+- **FastMCP** - Custom MCP server framework
+- **MCP SDK** - Model Context Protocol client
+- **SQLite** - Database
+- **Python** - Client and custom MCP server
+- **Node.js** - Playwright MCP runtime
 
-## 📝 Key Files
+## � Project Structure
 
-- `llm_client.py` - **LLM client that connects Groq to MCP server (DB + UI analysis)**
-- `mcp_server.py` - MCP server exposing database + UI snapshots
-- `init_db.py` - Database initialization and seeding
-- `index.html` - Frontend storyboard UI
-- `tests/storyboard.spec.ts` - Playwright test suite
-- `analyze_snapshot_vs_db.py` - Snapshot analysis script
-- `setup_llm.sh` - Automated setup script
-- `generate_snapshots.sh` - Generate UI snapshots for MCP
-- `DOM_ANALYSIS_GUIDE.md` - Guide for UI + Database analysis
-- `playwright.config.ts` - Playwright configuration
+```
+rag_mcp/
+├── llm_client_playwright.py    # Main client with LLM-driven tool calling
+├── mcp_server.py                # Custom database MCP server
+├── init_db.py                   # Database initialization
+├── index.html                   # Agile board UI (for testing)
+├── .env                         # Groq API key (create this)
+├── db/
+│   └── agile_board.db          # SQLite database
+├── node_modules/
+│   └── @playwright/mcp/        # Official Playwright MCP
+└── docs/
+    ├── DUAL_MCP_SETUP.md       # Dual MCP setup guide
+    ├── HOW_TO_USE.md           # Usage guide
+    ├── LLM_DRIVEN_TOOL_CALLING.md  # Tool calling documentation
+    ├── IMPLEMENTATION_SUMMARY.md   # Implementation details
+    └── PLAYWRIGHT_MCP_TOOLS_REFERENCE.md  # Tool reference
+```
 
-## 🎓 Learning Outcomes
+## 📚 Documentation
 
-This project demonstrates:
-- Setting up an MCP server with FastMCP
-- Browser automation with Playwright
-- Snapshot-based testing techniques
-- Comparing UI state against database state
-- Detecting UI/data discrepancies automatically
-- Agile workflow visualization
+- **[DUAL_MCP_SETUP.md](DUAL_MCP_SETUP.md)** - Complete dual MCP setup guide
+- **[HOW_TO_USE.md](HOW_TO_USE.md)** - Detailed usage instructions
+- **[LLM_DRIVEN_TOOL_CALLING.md](LLM_DRIVEN_TOOL_CALLING.md)** - How LLM-driven tool calling works
+- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Implementation summary
+- **[PLAYWRIGHT_MCP_TOOLS_REFERENCE.md](PLAYWRIGHT_MCP_TOOLS_REFERENCE.md)** - All 22 Playwright tools
+
+## 🎓 Key Concepts
+
+### **Model Context Protocol (MCP)**
+Standardized protocol for connecting AI assistants to external data sources and tools.
+
+### **LLM-Driven Tool Calling**
+The LLM decides which tools to call based on natural language understanding, not hardcoded logic.
+
+### **Dual MCP Architecture**
+Running two MCP servers simultaneously - one for database, one for browser automation.
+
+### **Accessibility Tree**
+Structured representation of UI components with `ref` identifiers for each interactive element.
+
+### **Conversation Memory**
+Maintaining conversation history and page snapshots across multiple user questions.
+
+## 🎯 Use Cases
+
+- **Web scraping with natural language** - "Go to site.com and extract all product prices"
+- **Automated testing** - "Navigate to app.com and verify the login flow works"
+- **Data validation** - "Compare database with live webpage"
+- **UI analysis** - "Describe the navigation structure of website.com"
+- **Form automation** - "Fill out the contact form with my details"
+
+## 🐛 Troubleshooting
+
+### **"Playwright MCP not connected"**
+Make sure you installed Playwright MCP:
+```bash
+npm install @playwright/mcp@latest
+```
+
+### **"Groq API error"**
+Check your `.env` file has the correct API key:
+```bash
+cat .env
+# Should show: GROQ_API_KEY=gsk_...
+```
+
+### **"Database not found"**
+Initialize the database:
+```bash
+python init_db.py
+```
 
 ## 📄 License
 
 ISC
 
-## 👥 Contributors
+## 👥 Contributing
 
-Open for contributions! Feel free to submit issues and pull requests.
+Contributions welcome! This project demonstrates:
+- LLM-driven browser automation
+- Dual MCP architecture
+- Natural language web interaction
+- Database + UI comparison
+
+Feel free to submit issues and pull requests!
